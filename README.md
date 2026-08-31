@@ -34,9 +34,9 @@ pelo script [`deploy.sh`](deploy.sh).
 ### Arquitetura
 
 ```
-   Desenvolvedor                          Azure  (562074-grupo-rg)
+   Desenvolvedor                          Azure  (rg-562074-cp4)
    -------------                          ----------------------------------
-   docker build      ──push──►   ACR  acr562074agrovision
+   docker build      ──push──►   ACR  acr562074cp4
         │                          │
         │                          │ pull
         ▼                          ▼
@@ -47,7 +47,7 @@ pelo script [`deploy.sh`](deploy.sh).
                                      │                       │ volume
                                      │ IP público            ▼
                                   Internet          Storage Account
-                                                    st562074agrovision
+                                                    st562074cp4
                                                     (file share: dbdata)
 ```
 
@@ -166,10 +166,10 @@ docker compose down
 ## Passo 3 — Login no Azure Container Registry
 
 ```bash
-az acr login --name acr562074agrovision
+az acr login --name acr562074cp4
 
 # alternativa equivalente
-docker login acr562074agrovision.azurecr.io
+docker login acr562074cp4.azurecr.io
 ```
 
 ---
@@ -177,17 +177,17 @@ docker login acr562074agrovision.azurecr.io
 ## Passo 4 — Push das imagens para o ACR
 
 ```bash
-docker tag 562074-app:latest acr562074agrovision.azurecr.io/562074-app:latest
-docker tag 562074-db:latest  acr562074agrovision.azurecr.io/562074-db:latest
+docker tag 562074-app:latest acr562074cp4.azurecr.io/562074-app:latest
+docker tag 562074-db:latest  acr562074cp4.azurecr.io/562074-db:latest
 
-docker push acr562074agrovision.azurecr.io/562074-app:latest
-docker push acr562074agrovision.azurecr.io/562074-db:latest
+docker push acr562074cp4.azurecr.io/562074-app:latest
+docker push acr562074cp4.azurecr.io/562074-db:latest
 ```
 
 Conferir as imagens registradas:
 
 ```bash
-az acr repository list --name acr562074agrovision --output table
+az acr repository list --name acr562074cp4 --output table
 ```
 
 ---
@@ -214,20 +214,20 @@ No Windows, execute pelo **Git Bash**.
 
 ```bash
 # Todos os recursos do grupo
-az resource list --resource-group 562074-grupo-rg --output table
+az resource list --resource-group rg-562074-cp4 --output table
 
 # Containers em execução
-az container list --resource-group 562074-grupo-rg --output table
+az container list --resource-group rg-562074-cp4 --output table
 
 # URL pública da aplicação
-az container show --resource-group 562074-grupo-rg \
+az container show --resource-group rg-562074-cp4 \
   --name 562074-app --query ipAddress.fqdn -o tsv
 ```
 
 Logs da aplicação na nuvem:
 
 ```bash
-az container logs --resource-group 562074-grupo-rg --name 562074-app
+az container logs --resource-group rg-562074-cp4 --name 562074-app
 ```
 
 ---
@@ -277,7 +277,7 @@ Acessar o MySQL dentro do container na Azure:
 
 ```bash
 az container exec \
-  --resource-group 562074-grupo-rg \
+  --resource-group rg-562074-cp4 \
   --name 562074-db \
   --exec-command "/bin/bash"
 ```
@@ -302,7 +302,7 @@ SELECT * FROM TB_LOG_ERRO_GS;
 ### Comprovar o volume persistente
 
 ```bash
-az container restart --resource-group 562074-grupo-rg --name 562074-db
+az container restart --resource-group rg-562074-cp4 --name 562074-db
 ```
 
 Após o restart, repetir os `SELECT` — os registros continuam no banco, pois os
@@ -342,5 +342,5 @@ Documentação interativa: `http://<APP_FQDN>:8080/swagger-ui.html`
 ## Limpeza dos recursos
 
 ```bash
-az group delete --name 562074-grupo-rg --yes --no-wait
+az group delete --name rg-562074-cp4 --yes --no-wait
 ```

@@ -14,12 +14,13 @@
 
 # Variaveis principais
 RM=562074
-GRUPO=agrovision
+GRUPO=cloudops
+CP=cp4
 LOCATION=brazilsouth
 
-RG=rg-$RM-$GRUPO
-ACR=acr$RM$GRUPO
-STORAGE=st$RM$GRUPO
+RG=rg-$RM-$CP
+ACR=acr$RM$CP
+STORAGE=st$RM$CP
 SHARE=dbdata
 
 ACI_APP=$RM-app
@@ -28,8 +29,8 @@ ACI_DB=$RM-db
 IMG_APP=$RM-app
 IMG_DB=$RM-db
 
-DNS_APP=$GRUPO-app-$RM
-DNS_DB=$GRUPO-db-$RM
+DNS_APP=$CP-app-$RM
+DNS_DB=$CP-db-$RM
 
 TAGS="owner=$GRUPO environment=dev cost-center=fiap"
 
