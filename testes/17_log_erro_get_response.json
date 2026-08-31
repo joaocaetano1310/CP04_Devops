@@ -1,0 +1,8 @@
+{
+  "id": 1,
+  "nomeProcedure": "PlantacaoService.buscarPorId",
+  "nomeUser": "12345678901",
+  "dataErro": "2026-09-01",
+  "codigoErro": 404,
+  "mensagemErro": "Plantacao nao encontrada com o id: 99"
+}

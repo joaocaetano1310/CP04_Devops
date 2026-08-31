@@ -1,0 +1,4 @@
+{
+  "status": 204,
+  "descricao": "No Content - registro removido com sucesso. A ausencia do registro e comprovada por SELECT executado diretamente no banco de dados."
+}

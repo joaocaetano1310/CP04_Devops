@@ -1,0 +1,8 @@
+{
+  "usuarioId": 1,
+  "tipoPlantio": "Soja",
+  "areaPlantio": 150000,
+  "dataPlantio": "2026-03-15",
+  "localPlantio": "Talhao Norte",
+  "status": "PLANTADO"
+}

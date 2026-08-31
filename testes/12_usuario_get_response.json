@@ -1,0 +1,10 @@
+{
+  "id": 1,
+  "cpf": 12345678901,
+  "nome": "Joao Victor Caetano Alves da Silva",
+  "nomeFazenda": "Fazenda Santa Clara - Unidade II",
+  "_links": {
+    "self":       { "href": "http://<FQDN>:8080/api/usuarios/1" },
+    "plantacoes": { "href": "http://<FQDN>:8080/api/plantacoes/usuario/1" }
+  }
+}

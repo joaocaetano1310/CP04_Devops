@@ -1,0 +1,19 @@
+/target/
+/.apt_generated/
+/.apt_generated_tests/
+
+# Credenciais - NUNCA versionar
+.env
+*.env
+!.env.example
+
+# IDE
+/.settings/
+/.project
+/.classpath
+/.idea/
+*.iml
+/.vscode/
+
+# Logs
+*.log
