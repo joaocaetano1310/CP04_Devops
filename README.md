@@ -206,9 +206,15 @@ az acr repository list --name acr562074agrovision --output table
 O script abaixo cria **todos** os recursos (Resource Group, ACR, Storage Account,
 File Share, ACI do banco e ACI da aplicação) e já executa os passos 1, 3 e 4:
 
+**Linux / macOS / Git Bash:**
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+.\deploy.ps1
 ```
 
 Ao final, o script imprime as URLs de acesso.
