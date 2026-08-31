@@ -94,25 +94,16 @@ agrovision-gs/
 - Azure CLI autenticado (`az login`)
 - JDK 21 (opcional — o build acontece dentro do container)
 
-## Passo 0 — Configurar as credenciais
+## Passo 0 — Ambiente local
 
-Nenhuma senha está gravada no código-fonte. Todas as credenciais são lidas de
-variáveis de ambiente a partir de um arquivo `.env` local, que **não é versionado**.
+As credenciais nunca ficam gravadas no código. Para o ambiente local, o Docker
+Compose lê um arquivo `.env` que **não é versionado**:
 
 ```bash
 cp .env.example .env
 ```
 
-Edite o `.env` e preencha os valores:
-
-```
-DB_NAME=agrovision
-DB_USER=agrouser
-DB_PASSWORD=<sua-senha>
-DB_ROOT_PASSWORD=<sua-senha-root>
-JWT_SECRET=<chave-de-no-minimo-32-caracteres>
-JWT_EXPIRATION=86400000
-```
+O `deploy.sh` não usa esse arquivo — ele pergunta as credenciais na execução.
 
 ---
 
@@ -138,16 +129,16 @@ docker images | grep 562074
 
 ```bash
 docker compose up -d --build
-docker ps
+docker compose ps
 ```
 
 Acompanhar a subida da aplicação:
 
 ```bash
-docker logs -f 562074-app-local
+docker compose logs -f app
 ```
 
-A API fica disponível em `http://localhost:8080` e o Swagger em
+A API fica em `http://localhost:8080` e o Swagger em
 `http://localhost:8080/swagger-ui.html`.
 
 Validar o CRUD antes de subir para a nuvem:
@@ -203,21 +194,19 @@ az acr repository list --name acr562074agrovision --output table
 
 ## Passo 5 — Deploy completo na Azure
 
-O script abaixo cria **todos** os recursos (Resource Group, ACR, Storage Account,
-File Share, ACI do banco e ACI da aplicação) e já executa os passos 1, 3 e 4:
+O script cria **todos** os recursos (Resource Group, ACR, Conta de Armazenamento,
+File Share e os dois ACIs) e já executa os passos 1, 3 e 4. Ele pergunta as
+credenciais na execução, então nenhuma senha fica no repositório.
 
-**Linux / macOS / Git Bash:**
 ```bash
+az login
+
 chmod +x deploy.sh
+sed -i 's/\r$//' deploy.sh
 ./deploy.sh
 ```
 
-**Windows (PowerShell):**
-```powershell
-.\deploy.ps1
-```
-
-Ao final, o script imprime as URLs de acesso.
+No Windows, execute pelo **Git Bash**.
 
 ---
 

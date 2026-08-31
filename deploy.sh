@@ -1,228 +1,178 @@
-#!/usr/bin/env bash
-# ========================================================================
-# AgroVision - Provisionamento COMPLETO na Azure via Azure CLI
-# ------------------------------------------------------------------------
-# Cria, nesta ordem:
-#   1. Resource Group
-#   2. Azure Container Registry (ACR)
-#   3. Storage Account + File Share  (volume persistente do banco)
-#   4. Build e push das imagens para o ACR
-#   5. ACI do banco de dados (MySQL, com volume persistente)
-#   6. ACI da aplicacao (Spring Boot, com IP publico e DNS)
+#!/bin/bash
+# =========================================================================
+# 1o Checkpoint 2o Semestre - Containers em Nuvem (ACR / ACI)
+# Grupo CloudOps - RM 562074
 #
-# Pre-requisitos:
-#   - Azure CLI autenticado ......... az login
-#   - Docker em execucao
-#   - Arquivo .env preenchido ....... cp .env.example .env
+# Cria todos os recursos da solucao na Azure via Azure CLI:
+#   Resource Group, Container Registry, Conta de Armazenamento,
+#   File Share e dois Container Instances (aplicacao e banco de dados).
 #
-# Uso:
-#   chmod +x deploy.sh
-#   ./deploy.sh
-# ========================================================================
+# chmod +x deploy.sh
+# sed -i 's/\r$//' deploy.sh
+# ./deploy.sh
+# =========================================================================
 
-set -euo pipefail
+# Variaveis principais
+RM=562074
+GRUPO=agrovision
+LOCATION=brazilsouth
 
-# ------------------------------------------------------------------------
-# Carrega as credenciais do arquivo .env (nao versionado)
-# ------------------------------------------------------------------------
-if [ ! -f .env ]; then
-  echo "ERRO: arquivo .env nao encontrado."
-  echo "Execute: cp .env.example .env  e preencha os valores."
-  exit 1
-fi
-set -a; source .env; set +a
+RG=rg-$RM-$GRUPO
+ACR=acr$RM$GRUPO
+STORAGE=st$RM$GRUPO
+SHARE=dbdata
 
-# ------------------------------------------------------------------------
-# Parametros - RM do representante do grupo usado como prefixo
-# ------------------------------------------------------------------------
-RM="562074"
-LOCATION="brazilsouth"
+ACI_APP=$RM-app
+ACI_DB=$RM-db
 
-RESOURCE_GROUP="${RM}-grupo-rg"
-ACR_NAME="acr${RM}agrovision"
-STORAGE_ACCOUNT="st${RM}agrovision"
-FILE_SHARE="dbdata"
+IMG_APP=$RM-app
+IMG_DB=$RM-db
 
-APP_ACI="${RM}-app"
-DB_ACI="${RM}-db"
+DNS_APP=$GRUPO-app-$RM
+DNS_DB=$GRUPO-db-$RM
 
-APP_IMAGE="${RM}-app"
-DB_IMAGE="${RM}-db"
+TAGS="owner=$GRUPO environment=dev cost-center=fiap"
 
-DNS_APP="agrovision-app-${RM}"
-DNS_DB="agrovision-db-${RM}"
+# Credenciais informadas na execucao.
+# Nao ficam gravadas no script nem no repositorio.
+read -p  "Nome do banco de dados [agrovision]: " DB_NAME
+DB_NAME=${DB_NAME:-agrovision}
+read -p  "Usuario do banco [agrouser]: " DB_USER
+DB_USER=${DB_USER:-agrouser}
+read -sp "Senha do usuario do banco: " DB_PASSWORD; echo
+read -sp "Senha do root do MySQL: "     DB_ROOT_PASSWORD; echo
+read -sp "Chave JWT (min. 32 caracteres): " JWT_SECRET; echo
 
-echo "========================================================"
-echo " AgroVision - Deploy na Azure"
-echo " Resource Group : ${RESOURCE_GROUP}"
-echo " Regiao         : ${LOCATION}"
-echo "========================================================"
-
-# ------------------------------------------------------------------------
 # 1. Resource Group
-# ------------------------------------------------------------------------
-echo ""
-echo ">>> [1/6] Criando Resource Group..."
 az group create \
-  --name "${RESOURCE_GROUP}" \
-  --location "${LOCATION}" \
-  --output table
+  --name $RG \
+  --location $LOCATION \
+  --tags $TAGS
 
-# ------------------------------------------------------------------------
 # 2. Azure Container Registry
-# ------------------------------------------------------------------------
-echo ""
-echo ">>> [2/6] Criando Azure Container Registry..."
 az acr create \
-  --resource-group "${RESOURCE_GROUP}" \
-  --name "${ACR_NAME}" \
+  --resource-group $RG \
+  --name $ACR \
   --sku Basic \
   --admin-enabled true \
-  --output table
+  --tags $TAGS
 
-ACR_SERVER=$(az acr show --name "${ACR_NAME}" \
-  --resource-group "${RESOURCE_GROUP}" \
-  --query loginServer -o tsv)
-
-ACR_USER=$(az acr credential show --name "${ACR_NAME}" \
-  --query username -o tsv)
-
-ACR_PASSWORD=$(az acr credential show --name "${ACR_NAME}" \
-  --query "passwords[0].value" -o tsv)
-
-# ------------------------------------------------------------------------
-# 3. Storage Account + File Share (persistencia do banco)
-# ------------------------------------------------------------------------
-echo ""
-echo ">>> [3/6] Criando Conta de Armazenamento e File Share..."
+# 3. Conta de Armazenamento
 az storage account create \
-  --name "${STORAGE_ACCOUNT}" \
-  --resource-group "${RESOURCE_GROUP}" \
-  --location "${LOCATION}" \
+  --resource-group $RG \
+  --name $STORAGE \
+  --location $LOCATION \
   --sku Standard_LRS \
   --kind StorageV2 \
-  --output table
+  --tags $TAGS
 
+# 4. File Share - volume persistente do banco de dados
 STORAGE_KEY=$(az storage account keys list \
-  --account-name "${STORAGE_ACCOUNT}" \
-  --resource-group "${RESOURCE_GROUP}" \
+  --resource-group $RG \
+  --account-name $STORAGE \
   --query "[0].value" -o tsv)
 
 az storage share create \
-  --name "${FILE_SHARE}" \
-  --account-name "${STORAGE_ACCOUNT}" \
-  --account-key "${STORAGE_KEY}" \
-  --quota 10 \
-  --output table
+  --name $SHARE \
+  --account-name $STORAGE \
+  --account-key $STORAGE_KEY \
+  --quota 10
 
-# ------------------------------------------------------------------------
-# 4. Build e push das imagens
-# ------------------------------------------------------------------------
-echo ""
-echo ">>> [4/6] Build das imagens e push para o ACR..."
+# 5. Build das imagens localmente
+docker build -t $IMG_APP:latest .
+docker build -t $IMG_DB:latest ./db
 
-az acr login --name "${ACR_NAME}"
+# 6. Login no ACR e push das imagens
+az acr login --name $ACR
 
-docker build -t "${APP_IMAGE}:latest" .
-docker build -t "${DB_IMAGE}:latest" ./db
+ACR_SERVER=$ACR.azurecr.io
 
-docker tag "${APP_IMAGE}:latest" "${ACR_SERVER}/${APP_IMAGE}:latest"
-docker tag "${DB_IMAGE}:latest"  "${ACR_SERVER}/${DB_IMAGE}:latest"
+docker tag $IMG_APP:latest $ACR_SERVER/$IMG_APP:latest
+docker tag $IMG_DB:latest  $ACR_SERVER/$IMG_DB:latest
 
-docker push "${ACR_SERVER}/${APP_IMAGE}:latest"
-docker push "${ACR_SERVER}/${DB_IMAGE}:latest"
+docker push $ACR_SERVER/$IMG_APP:latest
+docker push $ACR_SERVER/$IMG_DB:latest
 
-echo ""
-echo "Imagens registradas no ACR:"
-az acr repository list --name "${ACR_NAME}" --output table
+az acr repository list --name $ACR --output table
 
-# ------------------------------------------------------------------------
-# 5. ACI do Banco de Dados - com volume persistente
-# ------------------------------------------------------------------------
-echo ""
-echo ">>> [5/6] Criando o ACI do banco de dados..."
+# 7. Credenciais do ACR para o ACI baixar as imagens
+ACR_USER=$(az acr credential show \
+  --name $ACR \
+  --query username -o tsv)
+
+ACR_PASSWORD=$(az acr credential show \
+  --name $ACR \
+  --query "passwords[0].value" -o tsv)
+
+# 8. ACI do banco de dados - com volume persistente
 az container create \
-  --resource-group "${RESOURCE_GROUP}" \
-  --name "${DB_ACI}" \
-  --image "${ACR_SERVER}/${DB_IMAGE}:latest" \
-  --registry-login-server "${ACR_SERVER}" \
-  --registry-username "${ACR_USER}" \
-  --registry-password "${ACR_PASSWORD}" \
+  --resource-group $RG \
+  --name $ACI_DB \
+  --image $ACR_SERVER/$IMG_DB:latest \
+  --registry-login-server $ACR_SERVER \
+  --registry-username $ACR_USER \
+  --registry-password $ACR_PASSWORD \
   --cpu 1 \
   --memory 2 \
   --os-type Linux \
   --ports 3306 \
   --ip-address Public \
-  --dns-name-label "${DNS_DB}" \
-  --secure-environment-variables \
-      MYSQL_ROOT_PASSWORD="${DB_ROOT_PASSWORD}" \
-      MYSQL_PASSWORD="${DB_PASSWORD}" \
-  --environment-variables \
-      MYSQL_DATABASE="${DB_NAME}" \
-      MYSQL_USER="${DB_USER}" \
-  --azure-file-volume-account-name "${STORAGE_ACCOUNT}" \
-  --azure-file-volume-account-key "${STORAGE_KEY}" \
-  --azure-file-volume-share-name "${FILE_SHARE}" \
+  --dns-name-label $DNS_DB \
+  --environment-variables MYSQL_DATABASE=$DB_NAME MYSQL_USER=$DB_USER \
+  --secure-environment-variables MYSQL_ROOT_PASSWORD=$DB_ROOT_PASSWORD MYSQL_PASSWORD=$DB_PASSWORD \
+  --azure-file-volume-account-name $STORAGE \
+  --azure-file-volume-account-key $STORAGE_KEY \
+  --azure-file-volume-share-name $SHARE \
   --azure-file-volume-mount-path /var/lib/mysql \
   --restart-policy OnFailure \
-  --output table
+  --tags $TAGS
 
-DB_FQDN=$(az container show \
-  --resource-group "${RESOURCE_GROUP}" \
-  --name "${DB_ACI}" \
+# 9. Endereco do banco e espera pela inicializacao do MySQL
+DB_HOST=$(az container show \
+  --resource-group $RG \
+  --name $ACI_DB \
   --query ipAddress.fqdn -o tsv)
 
-echo "Banco de dados disponivel em: ${DB_FQDN}:3306"
-echo "Aguardando a inicializacao do MySQL (60s)..."
+echo "Banco de dados em: $DB_HOST:3306"
+echo "Aguardando a inicializacao do MySQL..."
 sleep 60
 
-# ------------------------------------------------------------------------
-# 6. ACI da Aplicacao
-# ------------------------------------------------------------------------
-echo ""
-echo ">>> [6/6] Criando o ACI da aplicacao..."
+# 10. ACI da aplicacao
 az container create \
-  --resource-group "${RESOURCE_GROUP}" \
-  --name "${APP_ACI}" \
-  --image "${ACR_SERVER}/${APP_IMAGE}:latest" \
-  --registry-login-server "${ACR_SERVER}" \
-  --registry-username "${ACR_USER}" \
-  --registry-password "${ACR_PASSWORD}" \
+  --resource-group $RG \
+  --name $ACI_APP \
+  --image $ACR_SERVER/$IMG_APP:latest \
+  --registry-login-server $ACR_SERVER \
+  --registry-username $ACR_USER \
+  --registry-password $ACR_PASSWORD \
   --cpu 1 \
   --memory 2 \
   --os-type Linux \
   --ports 8080 \
   --ip-address Public \
-  --dns-name-label "${DNS_APP}" \
-  --secure-environment-variables \
-      DB_PASSWORD="${DB_PASSWORD}" \
-      JWT_SECRET="${JWT_SECRET}" \
-  --environment-variables \
-      SPRING_PROFILES_ACTIVE=docker \
-      DB_HOST="${DB_FQDN}" \
-      DB_PORT=3306 \
-      DB_NAME="${DB_NAME}" \
-      DB_USER="${DB_USER}" \
+  --dns-name-label $DNS_APP \
+  --environment-variables SPRING_PROFILES_ACTIVE=docker DB_HOST=$DB_HOST DB_PORT=3306 DB_NAME=$DB_NAME DB_USER=$DB_USER \
+  --secure-environment-variables DB_PASSWORD=$DB_PASSWORD JWT_SECRET=$JWT_SECRET \
   --restart-policy OnFailure \
-  --output table
+  --tags $TAGS
 
-APP_FQDN=$(az container show \
-  --resource-group "${RESOURCE_GROUP}" \
-  --name "${APP_ACI}" \
+# 11. Resultado final
+APP_HOST=$(az container show \
+  --resource-group $RG \
+  --name $ACI_APP \
   --query ipAddress.fqdn -o tsv)
 
-# ------------------------------------------------------------------------
-# Resumo
-# ------------------------------------------------------------------------
+az resource list --resource-group $RG --output table
+
 echo ""
 echo "========================================================"
-echo " DEPLOY CONCLUIDO"
+echo " Deploy concluido"
 echo "========================================================"
-echo " Resource Group ....... ${RESOURCE_GROUP}"
-echo " ACR .................. ${ACR_SERVER}"
-echo " Storage Account ...... ${STORAGE_ACCOUNT} (share: ${FILE_SHARE})"
-echo " ACI Banco ............ ${DB_ACI}  -> ${DB_FQDN}:3306"
-echo " ACI Aplicacao ........ ${APP_ACI} -> http://${APP_FQDN}:8080"
+echo " Resource Group ..... $RG"
+echo " Container Registry . $ACR_SERVER"
+echo " Armazenamento ...... $STORAGE (share: $SHARE)"
+echo " ACI do banco ....... $ACI_DB  -> $DB_HOST:3306"
+echo " ACI da aplicacao ... $ACI_APP -> http://$APP_HOST:8080"
 echo ""
-echo " Swagger UI: http://${APP_FQDN}:8080/swagger-ui.html"
+echo " Swagger: http://$APP_HOST:8080/swagger-ui.html"
 echo "========================================================"
