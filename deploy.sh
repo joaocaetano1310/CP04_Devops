@@ -74,10 +74,12 @@ az storage account create \
   --tags $TAGS
 
 # 4. File Share - volume persistente do banco de dados
+# O 'tr -d' remove o retorno de carro que o Azure CLI adiciona no
+# Windows/Git Bash e que invalidaria a assinatura das requisicoes.
 STORAGE_KEY=$(az storage account keys list \
   --resource-group $RG \
   --account-name $STORAGE \
-  --query "[0].value" -o tsv)
+  --query "[0].value" -o tsv | tr -d '\r')
 
 az storage share create \
   --name $SHARE \
@@ -105,11 +107,11 @@ az acr repository list --name $ACR --output table
 # 7. Credenciais do ACR para o ACI baixar as imagens
 ACR_USER=$(az acr credential show \
   --name $ACR \
-  --query username -o tsv)
+  --query username -o tsv | tr -d '\r')
 
 ACR_PASSWORD=$(az acr credential show \
   --name $ACR \
-  --query "passwords[0].value" -o tsv)
+  --query "passwords[0].value" -o tsv | tr -d '\r')
 
 # 8. ACI do banco de dados - com volume persistente
 az container create \
@@ -138,7 +140,7 @@ az container create \
 DB_HOST=$(az container show \
   --resource-group $RG \
   --name $ACI_DB \
-  --query ipAddress.fqdn -o tsv)
+  --query ipAddress.fqdn -o tsv | tr -d '\r')
 
 echo "Banco de dados em: $DB_HOST:3306"
 echo "Aguardando a inicializacao do MySQL..."
@@ -167,7 +169,7 @@ az container create \
 APP_HOST=$(az container show \
   --resource-group $RG \
   --name $ACI_APP \
-  --query ipAddress.fqdn -o tsv)
+  --query ipAddress.fqdn -o tsv | tr -d '\r')
 
 az resource list --resource-group $RG --output table
 
