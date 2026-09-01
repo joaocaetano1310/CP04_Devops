@@ -1,4 +1,4 @@
-# AgroVision — Containers em Nuvem (ACR / ACI)
+# CP4 — Imagem e Containers em Nuvem (ACR / ACI)
 
 **FIAP — Tecnologia em Desenvolvimento de Sistemas**
 DevOps Tools & Cloud Computing — 1º Checkpoint, 2º Semestre
@@ -18,11 +18,20 @@ Projeto DimDim · Prof. João Carlos Menk
 
 ---
 
+## Objetivo do checkpoint
+
+Containerizar uma aplicação Java e um banco de dados relacional, registrar as duas
+imagens no **Azure Container Registry** e executá-las na nuvem como **dois Azure
+Container Instances independentes**, com os dados do banco persistidos em uma Conta
+de Armazenamento.
+
+Não há máquina virtual envolvida: o ACI executa os containers diretamente, sem
+servidor a administrar.
+
 ## A solução
 
-API REST de monitoramento agrícola containerizada e executada na Azure como **dois
-Azure Container Instances independentes** — um com a aplicação, outro com o banco de
-dados. Não há máquina virtual: o ACI executa os containers diretamente.
+A aplicação containerizada é uma API REST desenvolvida nas aulas de Java, com CRUD
+sobre seis tabelas relacionais e autenticação JWT.
 
 | Camada | Tecnologia |
 |---|---|
