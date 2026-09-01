@@ -1,7 +1,7 @@
 #!/bin/bash
 # =========================================================================
 # 1o Checkpoint 2o Semestre - Containers em Nuvem (ACR / ACI)
-# Grupo CloudOps - RM 562074
+# Grupo CloudOps - RM 562766 (Felipe Furlanetto)
 #
 # Cria todos os recursos da solucao na Azure via Azure CLI:
 #   Resource Group, Container Registry, Conta de Armazenamento,
@@ -13,7 +13,7 @@
 # =========================================================================
 
 # Variaveis principais
-RM=562074
+RM=562766
 GRUPO=cloudops
 CP=cp4
 LOCATION=brazilsouth

@@ -10,10 +10,10 @@ Projeto DimDim
 
 | RM | Nome completo |
 |---|---|
-| 562074 | João Victor Caetano Alves da Silva *(representante)* |
+| 562766 | Felipe Furlanetto *(representante)* |
+| 562074 | João Victor Caetano Alves da Silva |
 | 564115 | João Victor Bueno Castelini da Silva |
 | 565667 | Ryan Vetoriano |
-| 562766 | Felipe Furlanetto |
 | 564002 | Raul Rezende Iemini Aguiar |
 
 ---
@@ -34,20 +34,20 @@ pelo script [`deploy.sh`](deploy.sh).
 ### Arquitetura
 
 ```
-   Desenvolvedor                          Azure  (rg-562074-cp4)
+   Desenvolvedor                          Azure  (rg-562766-cp4)
    -------------                          ----------------------------------
-   docker build      ──push──►   ACR  acr562074cp4
+   docker build      ──push──►   ACR  acr562766cp4
         │                          │
         │                          │ pull
         ▼                          ▼
    docker compose            ┌──────────────┐        ┌──────────────┐
-   (validação local)         │  ACI  562074-app  │──►│  ACI 562074-db  │
+   (validação local)         │  ACI  562766-app  │──►│  ACI 562766-db  │
                              │  Spring Boot :8080│   │  MySQL 8.0 :3306│
                              └──────────────┘        └───────┬──────┘
                                      │                       │ volume
                                      │ IP público            ▼
                                   Internet          Storage Account
-                                                    st562074cp4
+                                                    st562766cp4
                                                     (file share: dbdata)
 ```
 
@@ -111,16 +111,16 @@ O `deploy.sh` não usa esse arquivo — ele pergunta as credenciais na execuçã
 
 ```bash
 # Imagem da aplicação
-docker build -t 562074-app:latest .
+docker build -t 562766-app:latest .
 
 # Imagem do banco de dados
-docker build -t 562074-db:latest ./db
+docker build -t 562766-db:latest ./db
 ```
 
 Conferir:
 
 ```bash
-docker images | grep 562074
+docker images | grep 562766
 ```
 
 ---
@@ -166,10 +166,10 @@ docker compose down
 ## Passo 3 — Login no Azure Container Registry
 
 ```bash
-az acr login --name acr562074cp4
+az acr login --name acr562766cp4
 
 # alternativa equivalente
-docker login acr562074cp4.azurecr.io
+docker login acr562766cp4.azurecr.io
 ```
 
 ---
@@ -177,17 +177,17 @@ docker login acr562074cp4.azurecr.io
 ## Passo 4 — Push das imagens para o ACR
 
 ```bash
-docker tag 562074-app:latest acr562074cp4.azurecr.io/562074-app:latest
-docker tag 562074-db:latest  acr562074cp4.azurecr.io/562074-db:latest
+docker tag 562766-app:latest acr562766cp4.azurecr.io/562766-app:latest
+docker tag 562766-db:latest  acr562766cp4.azurecr.io/562766-db:latest
 
-docker push acr562074cp4.azurecr.io/562074-app:latest
-docker push acr562074cp4.azurecr.io/562074-db:latest
+docker push acr562766cp4.azurecr.io/562766-app:latest
+docker push acr562766cp4.azurecr.io/562766-db:latest
 ```
 
 Conferir as imagens registradas:
 
 ```bash
-az acr repository list --name acr562074cp4 --output table
+az acr repository list --name acr562766cp4 --output table
 ```
 
 ---
@@ -214,20 +214,20 @@ No Windows, execute pelo **Git Bash**.
 
 ```bash
 # Todos os recursos do grupo
-az resource list --resource-group rg-562074-cp4 --output table
+az resource list --resource-group rg-562766-cp4 --output table
 
 # Containers em execução
-az container list --resource-group rg-562074-cp4 --output table
+az container list --resource-group rg-562766-cp4 --output table
 
 # URL pública da aplicação
-az container show --resource-group rg-562074-cp4 \
-  --name 562074-app --query ipAddress.fqdn -o tsv
+az container show --resource-group rg-562766-cp4 \
+  --name 562766-app --query ipAddress.fqdn -o tsv
 ```
 
 Logs da aplicação na nuvem:
 
 ```bash
-az container logs --resource-group rg-562074-cp4 --name 562074-app
+az container logs --resource-group rg-562766-cp4 --name 562766-app
 ```
 
 ---
@@ -277,8 +277,8 @@ Acessar o MySQL dentro do container na Azure:
 
 ```bash
 az container exec \
-  --resource-group rg-562074-cp4 \
-  --name 562074-db \
+  --resource-group rg-562766-cp4 \
+  --name 562766-db \
   --exec-command "/bin/bash"
 ```
 
@@ -302,7 +302,7 @@ SELECT * FROM TB_LOG_ERRO_GS;
 ### Comprovar o volume persistente
 
 ```bash
-az container restart --resource-group rg-562074-cp4 --name 562074-db
+az container restart --resource-group rg-562766-cp4 --name 562766-db
 ```
 
 Após o restart, repetir os `SELECT` — os registros continuam no banco, pois os
@@ -342,5 +342,5 @@ Documentação interativa: `http://<APP_FQDN>:8080/swagger-ui.html`
 ## Limpeza dos recursos
 
 ```bash
-az group delete --name rg-562074-cp4 --yes --no-wait
+az group delete --name rg-562766-cp4 --yes --no-wait
 ```
