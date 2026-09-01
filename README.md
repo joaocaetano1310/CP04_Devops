@@ -4,6 +4,8 @@
 
 ---
 
+## Link do video: https://youtu.be/OP47ex5MCuQ
+
 ## Grupo CloudOps
 
 | RM | Nome completo |
