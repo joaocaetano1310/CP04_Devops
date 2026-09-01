@@ -1,8 +1,8 @@
 # AgroVision — Containers em Nuvem (ACR / ACI)
 
 **FIAP — Tecnologia em Desenvolvimento de Sistemas**
-Disciplina: DevOps Tools & Cloud Computing — 1º Checkpoint, 2º Semestre
-Projeto DimDim
+
+Link do video: https://youtu.be/OP47ex5MCuQ
 
 ---
 
