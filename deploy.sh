@@ -38,6 +38,8 @@ IMG_DB=$RM-db
 DNS_APP=$CP-app-$RM
 DNS_DB=$CP-db-$RM
 
+# O 'az container create' nao aceita --tags, por isso as tags sao
+# aplicadas apenas ao Resource Group, ao ACR e ao Armazenamento.
 TAGS="owner=$GRUPO environment=dev cost-center=fiap"
 
 # Credenciais informadas na execucao.
@@ -133,8 +135,7 @@ az container create \
   --azure-file-volume-account-key $STORAGE_KEY \
   --azure-file-volume-share-name $SHARE \
   --azure-file-volume-mount-path /var/lib/mysql \
-  --restart-policy OnFailure \
-  --tags $TAGS
+  --restart-policy OnFailure
 
 # 9. Endereco do banco e espera pela inicializacao do MySQL
 DB_HOST=$(az container show \
@@ -162,8 +163,7 @@ az container create \
   --dns-name-label $DNS_APP \
   --environment-variables SPRING_PROFILES_ACTIVE=docker DB_HOST=$DB_HOST DB_PORT=3306 DB_NAME=$DB_NAME DB_USER=$DB_USER \
   --secure-environment-variables DB_PASSWORD=$DB_PASSWORD JWT_SECRET=$JWT_SECRET \
-  --restart-policy OnFailure \
-  --tags $TAGS
+  --restart-policy OnFailure
 
 # 11. Resultado final
 APP_HOST=$(az container show \
