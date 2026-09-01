@@ -4,7 +4,7 @@
 
 ---
 
-## Link do video: https://youtu.be/OP47ex5MCuQ
+**Link do video: https://youtu.be/OP47ex5MCuQ
 
 ## Grupo CloudOps
 
