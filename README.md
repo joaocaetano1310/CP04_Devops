@@ -1,8 +1,6 @@
 # CP4 — Imagem e Containers em Nuvem (ACR / ACI)
 
 **FIAP — Tecnologia em Desenvolvimento de Sistemas**
-DevOps Tools & Cloud Computing — 1º Checkpoint, 2º Semestre
-Projeto DimDim · Prof. João Carlos Menk
 
 ---
 
