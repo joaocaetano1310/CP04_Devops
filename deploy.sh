@@ -18,6 +18,10 @@
 # Interrompe o script no primeiro erro, evitando falhas em cascata
 set -e
 
+# Impede o Git Bash no Windows de converter caminhos do container
+# (/var/lib/mysql viraria C:/Program Files/Git/var/lib/mysql)
+export MSYS_NO_PATHCONV=1
+
 # Variaveis principais
 RM=562766
 GRUPO=cloudops
