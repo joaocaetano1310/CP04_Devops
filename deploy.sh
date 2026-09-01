@@ -56,6 +56,12 @@ read -sp "Senha do usuario do banco: " DB_PASSWORD; echo
 read -sp "Senha do root do MySQL: "     DB_ROOT_PASSWORD; echo
 read -sp "Chave JWT (min. 32 caracteres): " JWT_SECRET; echo
 
+# Verifica que nada ficou em branco
+if [ -z "$DB_PASSWORD" ] || [ -z "$DB_ROOT_PASSWORD" ] || [ -z "$JWT_SECRET" ]; then
+  echo "ERRO: as senhas e a chave JWT nao podem ficar em branco."
+  exit 1
+fi
+
 # 1. Resource Group
 az group create \
   --name $RG \
@@ -90,7 +96,7 @@ STORAGE_KEY=$(az storage account keys list \
 az storage share create \
   --name $SHARE \
   --account-name $STORAGE \
-  --account-key $STORAGE_KEY \
+  --account-key "$STORAGE_KEY" \
   --quota 10
 
 # 5. Build das imagens localmente
@@ -125,18 +131,18 @@ az container create \
   --name $ACI_DB \
   --image $ACR_SERVER/$IMG_DB:latest \
   --registry-login-server $ACR_SERVER \
-  --registry-username $ACR_USER \
-  --registry-password $ACR_PASSWORD \
+  --registry-username "$ACR_USER" \
+  --registry-password "$ACR_PASSWORD" \
   --cpu 1 \
   --memory 2 \
   --os-type Linux \
   --ports 3306 \
   --ip-address Public \
   --dns-name-label $DNS_DB \
-  --environment-variables MYSQL_DATABASE=$DB_NAME MYSQL_USER=$DB_USER \
-  --secure-environment-variables MYSQL_ROOT_PASSWORD=$DB_ROOT_PASSWORD MYSQL_PASSWORD=$DB_PASSWORD \
+  --environment-variables MYSQL_DATABASE="$DB_NAME" MYSQL_USER="$DB_USER" \
+  --secure-environment-variables MYSQL_ROOT_PASSWORD="$DB_ROOT_PASSWORD" MYSQL_PASSWORD="$DB_PASSWORD" \
   --azure-file-volume-account-name $STORAGE \
-  --azure-file-volume-account-key $STORAGE_KEY \
+  --azure-file-volume-account-key "$STORAGE_KEY" \
   --azure-file-volume-share-name $SHARE \
   --azure-file-volume-mount-path /var/lib/mysql \
   --restart-policy OnFailure
@@ -157,16 +163,16 @@ az container create \
   --name $ACI_APP \
   --image $ACR_SERVER/$IMG_APP:latest \
   --registry-login-server $ACR_SERVER \
-  --registry-username $ACR_USER \
-  --registry-password $ACR_PASSWORD \
+  --registry-username "$ACR_USER" \
+  --registry-password "$ACR_PASSWORD" \
   --cpu 1 \
   --memory 2 \
   --os-type Linux \
   --ports 8080 \
   --ip-address Public \
   --dns-name-label $DNS_APP \
-  --environment-variables SPRING_PROFILES_ACTIVE=docker DB_HOST=$DB_HOST DB_PORT=3306 DB_NAME=$DB_NAME DB_USER=$DB_USER \
-  --secure-environment-variables DB_PASSWORD=$DB_PASSWORD JWT_SECRET=$JWT_SECRET \
+  --environment-variables SPRING_PROFILES_ACTIVE=docker DB_HOST="$DB_HOST" DB_PORT=3306 DB_NAME="$DB_NAME" DB_USER="$DB_USER" \
+  --secure-environment-variables DB_PASSWORD="$DB_PASSWORD" JWT_SECRET="$JWT_SECRET" \
   --restart-policy OnFailure
 
 # 11. Resultado final
