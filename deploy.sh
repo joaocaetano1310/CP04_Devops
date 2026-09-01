@@ -7,16 +7,22 @@
 #   Resource Group, Container Registry, Conta de Armazenamento,
 #   File Share e dois Container Instances (aplicacao e banco de dados).
 #
+# A regiao eastus e usada porque a assinatura da FIAP restringe por
+# politica as regioes disponiveis (brazilsouth e bloqueada).
+#
 # chmod +x deploy.sh
 # sed -i 's/\r$//' deploy.sh
 # ./deploy.sh
 # =========================================================================
 
+# Interrompe o script no primeiro erro, evitando falhas em cascata
+set -e
+
 # Variaveis principais
 RM=562766
 GRUPO=cloudops
 CP=cp4
-LOCATION=brazilsouth
+LOCATION=eastus
 
 RG=rg-$RM-$CP
 ACR=acr$RM$CP
